@@ -4,7 +4,7 @@ let cohesionForce = 0.1;
 let alignmentRange = 100;
 let separationRange = 40;
 let cohesionRange = 30;
-const MAX_SPEED = 4;
+const MAX_SPEED = 6;
 
 document.getElementById("cohesion").addEventListener("input" , (event)=>{
     cohesionForce = parseFloat(event.target.value)

@@ -13,13 +13,13 @@ import  {
 
 // separation constants
 const minSeparationDistance = 10;
-const hardSeparationForce = 1.5;
+const hardSeparationForce = 1;
 
 class Boid {
 
     constructor(xPos , yPos){
         this.position = new Vector(2, xPos, yPos);
-        this.velocity = new Vector(2, Math.random() * 6 - 1, Math.random() * 6 - 1);
+        this.velocity = new Vector(2, Math.random() * 10 , Math.random() * 10 );
         this.acceleration = new Vector(2, Math.random() * 6 - 1, Math.random() * 6 - 1);
         this.draw();
     }
@@ -34,9 +34,7 @@ class Boid {
     update() {
         this.position.add(this.velocity);
         this.velocity.add(this.acceleration);
-        // apply flocking forces
-      
-        // speed limit
+   
         const speed = this.velocity.magnitude();
         if (speed > MAX_SPEED) {
             // Scale back to max speed
@@ -72,7 +70,7 @@ function alignment(currentBoid) {
         count++;
     }
     if (count === 0) return steering;
-    steering.div(count).mult(MAX_SPEED).sub(currentBoid.velocity).mult(alignmentForce);
+    steering.div(count).mult(4).sub(currentBoid.velocity).mult(alignmentForce);
     return steering;
 }
 

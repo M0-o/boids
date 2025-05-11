@@ -22,6 +22,11 @@ class Boid {
         const alignmentForce = 0.05 ;
         this.vx += alignedX * alignmentForce;
         this.vy += alignedY * alignmentForce;
+        const [separatedX, separatedY] = separation(this); 
+        const separationForce = 0.3 ;
+        this.vx += separatedX * separationForce;
+        this.vy += separatedY * separationForce;
+
         if (this.xPos < 0) {
             this.xPos = canvas.width;
         } else if (this.xPos > canvas.width) {
@@ -67,7 +72,7 @@ function alignment(currentBoid) {
     let totalX = 0;
     let totalY = 0;
     let count = 0;
-    neighbors = boids.filter((neighborBoid) => euclidianDistance(currentBoid , neighborBoid) < 100 );
+    let neighbors = boids.filter((neighborBoid) => euclidianDistance(currentBoid , neighborBoid) < 100 );
     for (const boid of neighbors) {
         if (boid !== currentBoid) {  
             totalX += boid.vx;
@@ -93,3 +98,36 @@ animate();
 function euclidianDistance(boid1 , boid2){
     return Math.sqrt(Math.pow(boid1.xPos - boid2.xPos , 2) + Math.pow(boid1.yPos - boid2.yPos , 2))
 }
+
+function separation(currentBoid){
+    let neighbors = boids.filter((neighborBoid) => euclidianDistance(currentBoid , neighborBoid) < 30 );
+    let repulsionX =0;
+    let repulsionY =0;
+    let count =0 ;
+    for (const neighborBoid of neighbors) {
+        if (neighborBoid !== currentBoid) {  
+            repulsionX += (currentBoid.xPos - neighborBoid.xPos) * (1/euclidianDistance(neighborBoid,currentBoid) + 0.001) ;
+            repulsionY += (currentBoid.yPos - neighborBoid.yPos) * (1/euclidianDistance(neighborBoid,currentBoid) + 0.001) ;
+            count++;
+        }
+    }
+    if (count === 0) return [0, 0];
+  
+    let avgX = repulsionX / count;
+    let avgY = repulsionY / count;
+
+    return normalize([avgX , avgY])
+}
+
+
+function normalize(vector){
+    return [vector[0]/magnitude(vector) , vector[1]/magnitude(vector)]
+    
+}
+
+function magnitude(vector){
+    return Math.sqrt(vector.reduce((accumulator , curr)=> accumulator + Math.pow(curr,2) ,0))
+}
+
+
+console.log(magnitude([2,3]))

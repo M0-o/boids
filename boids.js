@@ -19,9 +19,9 @@ class Boid {
         this.xPos += this.vx;
         this.yPos += this.vy;
         const [alignedX, alignedY] = alignment(this); 
-        
-        this.vx += alignedX ;
-        this.vy += alignedY ;
+        const alignmentForce = 0.05 ;
+        this.vx += alignedX * alignmentForce;
+        this.vy += alignedY * alignmentForce;
         if (this.xPos < 0) {
             this.xPos = canvas.width;
         } else if (this.xPos > canvas.width) {
@@ -67,8 +67,8 @@ function alignment(currentBoid) {
     let totalX = 0;
     let totalY = 0;
     let count = 0;
-  
-    for (const boid of boids) {
+    neighbors = boids.filter((neighborBoid) => euclidianDistance(currentBoid , neighborBoid) < 100 );
+    for (const boid of neighbors) {
         if (boid !== currentBoid) {  
             totalX += boid.vx;
             totalY += boid.vy;
@@ -88,3 +88,8 @@ function alignment(currentBoid) {
 }
 
 animate();
+
+
+function euclidianDistance(boid1 , boid2){
+    return Math.sqrt(Math.pow(boid1.xPos - boid2.xPos , 2) + Math.pow(boid1.yPos - boid2.yPos , 2))
+}

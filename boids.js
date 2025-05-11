@@ -1,4 +1,4 @@
-import {sigmoid, euclidianDistance, getNeighbors} from "./helpers.js"
+import { euclidianDistance, getNeighbors} from "./helpers.js"
 import {canvas, ctx, boids} from "./animate.js"
 import {Vector} from "./Vector.js"
 import  {
@@ -11,28 +11,36 @@ import  {
     MAX_SPEED ,
     } from "./forces.js"
 
-
+// separation constants
+const minSeparationDistance = 10;
+const hardSeparationForce = 1.5;
 
 class Boid {
 
     constructor(xPos , yPos){
         this.position = new Vector(2, xPos, yPos);
         this.velocity = new Vector(2, Math.random() * 6 - 1, Math.random() * 6 - 1);
+        this.acceleration = new Vector(2, Math.random() * 6 - 1, Math.random() * 6 - 1);
         this.draw();
     }
-
-    update() {
-        this.position.add(this.velocity);
-        // apply flocking forces
+    
+    flock(){
         let align = alignment(this).mult(alignmentForce);
         let sep   = separation(this).mult(separationForce);
         let coh   = cohesion(this).mult(cohesionForce);
-        this.velocity.add(align).add(sep).add(coh);
+        this.acceleration.add(align).add(coh).add(sep);
+
+    }
+    update() {
+        this.position.add(this.velocity);
+        this.velocity.add(this.acceleration);
+        // apply flocking forces
+      
         // speed limit
         const speed = this.velocity.magnitude();
         if (speed > MAX_SPEED) {
             // Scale back to max speed
-            this.velocity.normalize().mult(MAX_SPEED);
+            this.velocity.normalize().mult(MAX_SPEED)    ;
         }
         
         // wrap around edges
@@ -41,7 +49,8 @@ class Boid {
         else if (x > canvas.width) x = 0;
         if (y < 0) y = canvas.height;
         else if (y > canvas.height) y = 0;
-        this.position = new Vector(2, x, y);
+        this.position.set(x,y);
+        this.acceleration.mult(0);
     }
 
     draw() {
@@ -63,20 +72,26 @@ function alignment(currentBoid) {
         count++;
     }
     if (count === 0) return steering;
-    steering.div(count).sub(currentBoid.velocity).normalize();
+    steering.div(count).mult(MAX_SPEED).sub(currentBoid.velocity).mult(alignmentForce);
     return steering;
 }
 
 function separation(currentBoid) {
     let steering = new Vector(2, 0, 0);
     let count = 0;
-    const alpha = 0.5;
     const neighbors = getNeighbors(boids, currentBoid, separationRange);
     for (const other of neighbors) {
         const d = euclidianDistance(currentBoid.position, other.position);
-        let diff = currentBoid.position.clone().sub(other.position);
-        diff.normalize().mult(sigmoid(alpha * (separationRange - d)));
-        steering.add(diff);
+        // direction from neighbor to current boid
+        let diff = currentBoid.position.clone().sub(other.position).normalize();
+        if (d < minSeparationDistance) {
+            // hard push if too close
+            steering.add(diff.clone().mult(hardSeparationForce));
+        } else {
+            // linear repulsion based on distance
+            const weight = (separationRange - d) / (separationRange - minSeparationDistance);
+            steering.add(diff.clone().mult(weight));
+        }
         count++;
     }
     if (count === 0) return steering;
@@ -84,19 +99,18 @@ function separation(currentBoid) {
 }
 
 function cohesion(currentBoid) {
-    let center = new Vector(2, 0, 0);
+    let steering = new Vector(2, 0, 0);
     let count = 0;
-    const alpha = 5;
-    const neighbors = getNeighbors(boids, currentBoid, cohesionRange);
+    // only consider neighbors beyond the separation zone
+    const neighbors = getNeighbors(boids, currentBoid, cohesionRange)
+        .filter(other => euclidianDistance(currentBoid.position, other.position) > minSeparationDistance);
     for (const other of neighbors) {
-        const d = euclidianDistance(currentBoid.position, other.position);
-        center.add(other.position.clone().mult(sigmoid(alpha * (cohesionRange - d))));
+        steering.add(other.position);
         count++;
     }
-    if (count === 0) return center;
-    center.div(count);
-    center.sub(currentBoid.position).normalize();
-    return center;
+    if (count === 0) return steering;
+    // steer toward average position
+    return steering.div(count).sub(currentBoid.position).normalize();
 }
 
 export {Boid};

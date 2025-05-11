@@ -1,9 +1,9 @@
-let alignmentForce = 0.05;
+let alignmentForce = 0.2;
 let separationForce = 0.3;
 let cohesionForce = 0.1;
 let alignmentRange = 100;
 let separationRange = 40;
-let cohesionRange = 100;
+let cohesionRange = 30;
 const MAX_SPEED = 4;
 
 document.getElementById("cohesion").addEventListener("input" , (event)=>{

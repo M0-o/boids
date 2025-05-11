@@ -41,6 +41,11 @@ class Vector{
     clone() {
         return new Vector(this.components.length, ...this.components);
     }
+    set(...components){
+        for(let i=0 ; i < this.components.length ; i++){
+            this.components[i] = components[i];
+        }
+    }
 }
 
 

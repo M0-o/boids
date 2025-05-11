@@ -6,12 +6,8 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let i=0 ;
+
 let boids = [];
-while( i < 100){
-    boids[i] = new Boid(0,0);
-   i++ ;
-}
 
 
 
@@ -31,6 +27,7 @@ function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     boids = boids.map((boid) => {
+        boid.flock();
         boid.update();
         boid.draw();
         return boid 

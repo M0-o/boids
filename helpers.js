@@ -1,6 +1,3 @@
-function sigmoid(x) {
-    return 1 / (1 + Math.exp(-x));
-}
 
 function euclidianDistance(vec1, vec2) {
     const dx = vec1.components[0] - vec2.components[0];
@@ -8,11 +5,11 @@ function euclidianDistance(vec1, vec2) {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
-function getNeighbors(boids, currentBoid, range) {
+function getNeighbors(boids, currentBoid, range , type) {
+    
     return boids.filter(other => 
-        other !== currentBoid &&
-        euclidianDistance(currentBoid.position, other.position) < range
+        other !== currentBoid && euclidianDistance(currentBoid.position, other.position) < range && (type == "cohesion" ? (euclidianDistance(currentBoid.position, other.position) >= 25 ):true) 
     );
 }
 
-export {sigmoid , euclidianDistance , getNeighbors}
+export { euclidianDistance , getNeighbors}

@@ -130,4 +130,3 @@ function magnitude(vector){
 }
 
 
-console.log(magnitude([2,3]))

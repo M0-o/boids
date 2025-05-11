@@ -18,9 +18,28 @@
     }
 </style>
 <body>
+<label for="alignment">Alignment</label>
+<input type="range" name="alignment" id="alignment" min="0" max="2" step="0.05" value="0.05">
+
+<label for="separation">Separation</label>
+<input type="range" name="separation" id="separation" min="0" max="2" step="0.05" value="0.3">
+
+<label for="cohesion">Cohesion</label>
+<input type="range" name="cohesion" id="cohesion" min="0" max="2" step="0.05" value="0.1">
+
+<br>
+<label for="alignmentRange">Alignment Range</label>
+<input type="range" name="alignmentRange" id="alignmentRange" min="10" max="300" step="10" value="100">
+
+<label for="separationRange">Separation Range</label>
+<input type="range" name="separationRange" id="separationRange" min="10" max="150" step="5" value="40">
+
+<label for="cohesionRange">Cohesion Range</label>
+<input type="range" name="cohesionRange" id="cohesionRange" min="10" max="300" step="10" value="100">
+
     <canvas width="800px" height="500px"></canvas>
 
-    <script src="boids.js"></script>
+    <script type="module" src="animate.js"></script>
 </body>
 
 </html>

@@ -1,132 +1,102 @@
-const canvas = document.querySelector("canvas") ;
-const ctx = canvas.getContext("2d");
+import {sigmoid, euclidianDistance, getNeighbors} from "./helpers.js"
+import {canvas, ctx, boids} from "./animate.js"
+import {Vector} from "./Vector.js"
+import  {
+    alignmentForce ,
+    separationForce, 
+    cohesionForce ,
+    alignmentRange ,
+    separationRange, 
+    cohesionRange ,
+    MAX_SPEED ,
+    } from "./forces.js"
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
 
 
 class Boid {
 
     constructor(xPos , yPos){
-        this.xPos = xPos ;
-        this.yPos = yPos ;
-        this.vx = Math.random() * 6 - 1;
-        this.vy = Math.random() * 6 - 1;
+        this.position = new Vector(2, xPos, yPos);
+        this.velocity = new Vector(2, Math.random() * 6 - 1, Math.random() * 6 - 1);
         this.draw();
     }
 
     update() {
-        this.xPos += this.vx;
-        this.yPos += this.vy;
-        const [alignedX, alignedY] = alignment(this); 
-        const alignmentForce = 0.05 ;
-        this.vx += alignedX * alignmentForce;
-        this.vy += alignedY * alignmentForce;
-        const [separatedX, separatedY] = separation(this); 
-        const separationForce = 0.3 ;
-        this.vx += separatedX * separationForce;
-        this.vy += separatedY * separationForce;
-
-        if (this.xPos < 0) {
-            this.xPos = canvas.width;
-        } else if (this.xPos > canvas.width) {
-            this.xPos = 0;
+        this.position.add(this.velocity);
+        // apply flocking forces
+        let align = alignment(this).mult(alignmentForce);
+        let sep   = separation(this).mult(separationForce);
+        let coh   = cohesion(this).mult(cohesionForce);
+        this.velocity.add(align).add(sep).add(coh);
+        // speed limit
+        const speed = this.velocity.magnitude();
+        if (speed > MAX_SPEED) {
+            // Scale back to max speed
+            this.velocity.normalize().mult(MAX_SPEED);
         }
-        if (this.yPos < 0) {
-            this.yPos = canvas.height;
-        } else if (this.yPos > canvas.height) {
-            this.yPos = 0;
-        }
+        
+        // wrap around edges
+        let [x, y] = this.position.components;
+        if (x < 0) x = canvas.width;
+        else if (x > canvas.width) x = 0;
+        if (y < 0) y = canvas.height;
+        else if (y > canvas.height) y = 0;
+        this.position = new Vector(2, x, y);
     }
 
     draw() {
+        let [x, y] = this.position.components;
         ctx.beginPath();
-        ctx.arc(this.xPos, this.yPos, 10, 0, Math.PI * 2, false);
+        ctx.arc(x, y, 10, 0, Math.PI * 2, false);
         ctx.fillStyle = "black";
         ctx.fill();
         ctx.closePath();
     }
 }
 
-const boids = [];
-
-canvas.addEventListener("click" , (event) => {
-    const rect = canvas.getBoundingClientRect();
-    const xPos = event.clientX - rect.left;
-    const yPos = event.clientY - rect.top;
-    const boid = new Boid(xPos, yPos);
-    boids.push(boid);
-})
-
-function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    boids.forEach((boid) => {
-        boid.update();
-        boid.draw();
-    });
-    requestAnimationFrame(animate);
-}
-
-
 function alignment(currentBoid) {
-    let totalX = 0;
-    let totalY = 0;
+    let steering = new Vector(2, 0, 0);
     let count = 0;
-    let neighbors = boids.filter((neighborBoid) => euclidianDistance(currentBoid , neighborBoid) < 100 );
-    for (const boid of neighbors) {
-        if (boid !== currentBoid) {  
-            totalX += boid.vx;
-            totalY += boid.vy;
-            count++;
-        }
+    const neighbors = getNeighbors(boids, currentBoid, alignmentRange);
+    for (const other of neighbors) {
+        steering.add(other.velocity);
+        count++;
     }
-  
-    if (count === 0) return [0, 0];
-  
-    let avgX = totalX / count;
-    let avgY = totalY / count;
-  
-    let steerX = avgX - currentBoid.vx;
-    let steerY = avgY - currentBoid.vy;
-    
-    return [steerX, steerY];
+    if (count === 0) return steering;
+    steering.div(count).sub(currentBoid.velocity).normalize();
+    return steering;
 }
 
-animate();
-
-
-function euclidianDistance(boid1 , boid2){
-    return Math.sqrt(Math.pow(boid1.xPos - boid2.xPos , 2) + Math.pow(boid1.yPos - boid2.yPos , 2))
-}
-
-function separation(currentBoid){
-    let neighbors = boids.filter((neighborBoid) => euclidianDistance(currentBoid , neighborBoid) < 30 );
-    let repulsionX =0;
-    let repulsionY =0;
-    let count =0 ;
-    for (const neighborBoid of neighbors) {
-        if (neighborBoid !== currentBoid) {  
-            repulsionX += (currentBoid.xPos - neighborBoid.xPos) * (1/euclidianDistance(neighborBoid,currentBoid) + 0.001) ;
-            repulsionY += (currentBoid.yPos - neighborBoid.yPos) * (1/euclidianDistance(neighborBoid,currentBoid) + 0.001) ;
-            count++;
-        }
+function separation(currentBoid) {
+    let steering = new Vector(2, 0, 0);
+    let count = 0;
+    const alpha = 0.5;
+    const neighbors = getNeighbors(boids, currentBoid, separationRange);
+    for (const other of neighbors) {
+        const d = euclidianDistance(currentBoid.position, other.position);
+        let diff = currentBoid.position.clone().sub(other.position);
+        diff.normalize().mult(sigmoid(alpha * (separationRange - d)));
+        steering.add(diff);
+        count++;
     }
-    if (count === 0) return [0, 0];
-  
-    let avgX = repulsionX / count;
-    let avgY = repulsionY / count;
-
-    return normalize([avgX , avgY])
+    if (count === 0) return steering;
+    return steering.div(count).normalize();
 }
 
-
-function normalize(vector){
-    return [vector[0]/magnitude(vector) , vector[1]/magnitude(vector)]
-    
+function cohesion(currentBoid) {
+    let center = new Vector(2, 0, 0);
+    let count = 0;
+    const alpha = 5;
+    const neighbors = getNeighbors(boids, currentBoid, cohesionRange);
+    for (const other of neighbors) {
+        const d = euclidianDistance(currentBoid.position, other.position);
+        center.add(other.position.clone().mult(sigmoid(alpha * (cohesionRange - d))));
+        count++;
+    }
+    if (count === 0) return center;
+    center.div(count);
+    center.sub(currentBoid.position).normalize();
+    return center;
 }
 
-function magnitude(vector){
-    return Math.sqrt(vector.reduce((accumulator , curr)=> accumulator + Math.pow(curr,2) ,0))
-}
-
-
+export {Boid};

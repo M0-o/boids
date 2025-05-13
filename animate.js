@@ -7,8 +7,9 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 
-let boids = [];
-
+let boids = Array.from({ length: 1000 }, () =>
+    new Boid(Math.random() * canvas.width, Math.random() * canvas.height)
+  );
 
 
 
@@ -25,7 +26,7 @@ canvas.addEventListener("click" , (event) => {
 
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+    console.log(boids.length)
     boids = boids.map((boid) => {
         boid.flock();
         boid.update();

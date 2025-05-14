@@ -7,7 +7,7 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 
-let boids = Array.from({ length: 1000 }, () =>
+let boids = Array.from({ length: 10000 }, () =>
     new Boid(Math.random() * canvas.width, Math.random() * canvas.height)
   );
 

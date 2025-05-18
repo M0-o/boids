@@ -9,7 +9,7 @@ class Point{
         this.y = y ;
     }
 }
-class BoundingBox {
+export class BoundingBox {
 
     constructor(x, y, halfWidth, halfHeight){
         this.center   = new Point(x,y)
@@ -48,12 +48,12 @@ class BoundingBox {
 
      draw(color = 'black'){
         ctx.save();
-        // move origin to the box’s center
+        
         ctx.translate(this.center.x, this.center.y);
     
         ctx.strokeStyle = color;
         ctx.lineWidth   = 2;
-        // draw with top‐left at (–halfWidth, –halfHeight)
+       
         ctx.strokeRect(
           -this.halfWidth,
           -this.halfHeight,
@@ -68,72 +68,3 @@ class BoundingBox {
 }
 
 
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let first  = new BoundingBox(300, 300, 100, 60);
-let second = new BoundingBox(500, 200, 120, 80);
-const boxes = [ first, second ];
-
-boxes.forEach(b => b.draw());
-
-let dragTarget = null;
-let dragOffset = { x: 0, y: 0 };
-
-canvas.addEventListener("mousedown", e => {
-    const rect   = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    for (const b of boxes) {
-     
-      if (
-    b.contains([mouseX , mouseY])
-      ) {
-        dragTarget = b;
-        dragOffset.x = mouseX - b.center.x;
-        dragOffset.y = mouseY - b.center.y;
-        break;
-      }
-    }
-  });
-
-  canvas.addEventListener("mousemove", e => {
-    if (!dragTarget) return;
-    const rect = canvas.getBoundingClientRect();
-    dragTarget.center.x = e.clientX - rect.left - dragOffset.x;
-    dragTarget.center.y = e.clientY - rect.top  - dragOffset.y;
-    // clear & redraw
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for( const  box of boxes ){
-        let color= 'black'
-        for( const other of boxes){
-            if( box == other) continue ;
-
-            if(box.intersectsOther(other)){
-                color = 'red'
-            }
-        }
-        box.draw(color);
-    }
-  });
-  
-  canvas.addEventListener("mouseup", () => {
-    dragTarget = null;
-  });
-
-/* function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-    boids = boids.map((boid) => {
-        boid.flock();
-        boid.update();
-        boid.draw();
-        return boid 
-    });
-    requestAnimationFrame(animate);
-} */
-
-
-
-export { BoundingBox }

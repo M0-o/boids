@@ -19,9 +19,9 @@ class Boid {
 
     constructor(xPos , yPos){
         this.position = new Vector(2, xPos, yPos);
-        this.velocity = new Vector(2, Math.random() * 10 , Math.random() * 10 );
+        this.velocity = new Vector(2, Math.random() * 6 , Math.random() * 6 );
         this.acceleration = new Vector(2, Math.random() * 6 - 1, Math.random() * 6 - 1);
-        this.draw();
+      
     }
     
     flock(){
@@ -54,7 +54,7 @@ class Boid {
     draw() {
         let [x, y] = this.position.components;
         ctx.beginPath();
-        ctx.arc(x, y, 10, 0, Math.PI * 2, false);
+        ctx.arc(x, y, 5, 0, Math.PI * 2, false);
         ctx.fillStyle = "black";
         ctx.fill();
         ctx.closePath();
@@ -70,7 +70,7 @@ function alignment(currentBoid) {
         count++;
     }
     if (count === 0) return steering;
-    steering.div(count).mult(4).sub(currentBoid.velocity).mult(alignmentForce);
+    steering.div(count).mult(4).sub(currentBoid.velocity);
     return steering;
 }
 

@@ -10,6 +10,7 @@ import  {
     cohesionRange ,
     MAX_SPEED ,
     } from "./forces.js"
+import { BoundingBox } from "./boundingBox.js";
 
 // separation constants
 const minSeparationDistance = 10;
@@ -64,7 +65,8 @@ class Boid {
 function alignment(currentBoid) {
     let steering = new Vector(2, 0, 0);
     let count = 0;
-    const neighbors = getNeighbors(boids, currentBoid, alignmentRange);
+    const range = new BoundingBox(currentBoid.position.components[0] , currentBoid.position.components[1] , alignmentRange , alignmentRange);
+    const neighbors = getNeighbors(boids ,range);
     for (const other of neighbors) {
         steering.add(other.velocity);
         count++;
@@ -77,7 +79,8 @@ function alignment(currentBoid) {
 function separation(currentBoid) {
     let steering = new Vector(2, 0, 0);
     let count = 0;
-    const neighbors = getNeighbors(boids, currentBoid, separationRange);
+    const range = new BoundingBox(currentBoid.position.components[0] , currentBoid.position.components[1] , separationRange, separationRange);
+    const neighbors = getNeighbors(boids ,range);
     for (const other of neighbors) {
         const d = euclidianDistance(currentBoid.position, other.position);
         // direction from neighbor to current boid
@@ -100,7 +103,8 @@ function cohesion(currentBoid) {
     let steering = new Vector(2, 0, 0);
     let count = 0;
     // only consider neighbors beyond the separation zone
-    const neighbors = getNeighbors(boids, currentBoid, cohesionRange)
+    const range = new BoundingBox(currentBoid.position.components[0] , currentBoid.position.components[1] , cohesionRange , cohesionRange);
+    const neighbors = getNeighbors(boids ,range)
         .filter(other => euclidianDistance(currentBoid.position, other.position) > minSeparationDistance);
     for (const other of neighbors) {
         steering.add(other.position);

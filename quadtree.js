@@ -2,30 +2,52 @@ import { BoundingBox } from "./boundingBox.js";
 
 export class Quadtree {
 
-    constructor(boundary , capacity = 3){
-        this.capacity = capacity ;
-        this.boundingBox = boundary ;
-        this.points = [] ;
+    constructor(boundary, capacity = 3) {
+        this.capacity     = capacity;
+        this.boundingBox  = boundary;
+        this.points       = [];    // will hold Boid instances
     }
 
-    insert(positionVector){
-        
-        if(! this.boundingBox.contains(positionVector)) return false ;
+    // now insert takes a Boid, not just [x,y]
+    insert(boid) {
+        const pos = boid.position.components;
+        if (!this.boundingBox.contains(pos)) return false;
 
-        if(this.points.length < this.capacity && this.northwest == undefined ){
-            this.points.push(positionVector);
-            return true ;
+        if (this.points.length < this.capacity && !this.northwest) {
+            this.points.push(boid);
+            return true;
         }
 
-        if(this.northwest == undefined ) this.subdivide();
+        if (!this.northwest) this.subdivide();
 
-        if(this.northwest.insert(positionVector)) return true ;
-        if(this.northeast.insert(positionVector)) return true ;
-        if(this.southwest.insert(positionVector)) return true ;
-        if(this.southeast.insert(positionVector)) return true ;
+        if (this.northwest.insert(boid)) return true;
+        if (this.northeast.insert(boid)) return true;
+        if (this.southwest.insert(boid)) return true;
+        if (this.southeast.insert(boid)) return true;
 
-    return false ;
+        return false;
+    }
 
+    queryRange(rangeBox, found = []) {
+        // if no overlap, bail out
+        if (!this.boundingBox.intersectsOther(rangeBox)) 
+            return found;
+
+        // check only the Boids stored in this node
+        for (const boid of this.points) {
+            if (rangeBox.contains(boid.position.components)) {
+                found.push(boid);
+            }
+        }
+        if (!this.northwest) 
+            return found;
+
+        this.northwest.queryRange(rangeBox, found);
+        this.northeast.queryRange(rangeBox, found);
+        this.southwest.queryRange(rangeBox, found);
+        this.southeast.queryRange(rangeBox, found);
+
+        return found;
     }
 
     subdivide(){
@@ -41,27 +63,6 @@ export class Quadtree {
 
     }
 
-    queryRange(boundingBox , pointsInRange = []){
-
-        if (!this.boundingBox.intersectsOther(boundingBox))
-            return pointsInRange;
-
-        for (let point of this.points)
-        {
-            if (boundingBox.containsPoint(point))
-                pointsInRange.push(point);
-        }
-        if (this.northwest == undefined)
-            return pointsInRange;
-
-        this.northwest.queryRange(boundingBox, pointsInRange);
-        this.northeast.queryRange(boundingBox, pointsInRange);
-        this.southwest.queryRange(boundingBox, pointsInRange);
-        this.southeast.queryRange(boundingBox, pointsInRange);
-    
-        return pointsInRange;
-    }
-
     draw(){
         if(this.northwest != undefined){
             this.northwest.draw();
@@ -71,6 +72,18 @@ export class Quadtree {
         }
         this.boundingBox.draw();
     }
+
+    clear(){
+        this.points.length = 0;
+        if(this.northwest){
+          this.northwest.clear();
+          this.northeast.clear();
+          this.southwest.clear();
+          this.southeast.clear();
+          this.northwest = this.northeast = this.southwest = this.southeast = null;
+        }
+      }
+      
 
 }
 

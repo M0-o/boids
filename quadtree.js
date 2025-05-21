@@ -52,7 +52,6 @@ export class Quadtree {
 
     subdivide(){
         const northwestBoundingBox = new BoundingBox(this.boundingBox.center.x - this.boundingBox.halfWidth/2 , this.boundingBox.center.y + this.boundingBox.halfHeight/2 , this.boundingBox.halfWidth/2 , this.boundingBox.halfHeight/2)
-        console.log(northwestBoundingBox);
         this.northwest = new Quadtree(northwestBoundingBox) ;
         const northeastBoundingBox = new BoundingBox(this.boundingBox.center.x + this.boundingBox.halfWidth/2 , this.boundingBox.center.y + this.boundingBox.halfHeight/2 , this.boundingBox.halfWidth/2 , this.boundingBox.halfHeight/2)
         this.northeast = new Quadtree(northeastBoundingBox) ;
